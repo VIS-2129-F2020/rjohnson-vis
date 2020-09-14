@@ -12,15 +12,22 @@ library(tidycensus)
 library(viridis)
 ```
 
+```{r load household vars, message=FALSE, results='hide'}
+hh_vars_2018 <- pums_variables %>%
+  distinct(year, survey, var_code, 
+           var_label, data_type, level) %>%
+  filter(level == "housing", year == 2018, survey == "acs1")
+```
+
+
 ```{r PUMA-level data from Travis Co, TX, message=FALSE, results='hide'}
-TravisCoPUMA <- get_pums(variables = c(
+Travis_puma_rentals <- get_pums(variables = c(
                                       "PUMA", 
                                       "HINCP", 
                                       "RNTP", 
-                                      "MRGP", 
                                       "NP", 
+                                      "BDSP",
                                       "HHT",
-                                      "TEN",
                                       "YBL"),
                         state = "TX",
                         year = 2018, 
@@ -50,19 +57,18 @@ TravisCoPUMA <- get_pums(variables = c(
       YBL_label == "2016" ~ 0,
       YBL_label == "2017" ~ 0,
       YBL_label == "2018" ~ 0,)) %>% 
-     filter(HINCP > 12140, RNTP > 0 | MRGP >0, PUMA > 05300 & PUMA < 05310) %>%
-     select(HINCP, RNTP, MRGP, NP, HHT_label, TEN_label, BLDG_AGE_dec)
+     filter(HINCP > 0, RNTP > 0, PUMA > 05300 & PUMA < 05310) %>%
+     select(HINCP, RNTP, NP, BDSP, HHT_label, BLDG_AGE_dec)
 
 ```
 ```{r PUMA-level data from Central Austin only, message=FALSE, results='hide'}
-CentralAustin <- get_pums(variables = c(
+Central_austin_rentals <- get_pums(variables = c(
                                       "PUMA", 
                                       "HINCP", 
                                       "RNTP", 
-                                      "MRGP", 
                                       "NP", 
+                                      "BDSP",
                                       "HHT",
-                                      "TEN",
                                       "YBL"),
                         state = "TX",
                         year = 2018, 
@@ -92,37 +98,90 @@ CentralAustin <- get_pums(variables = c(
       YBL_label == "2016" ~ 0,
       YBL_label == "2017" ~ 0,
       YBL_label == "2018" ~ 0,)) %>% 
-     filter(HINCP > 12140, RNTP > 0 | MRGP >0, PUMA == 05306) %>%
-     select(HINCP, RNTP, MRGP, NP, HHT_label, TEN_label, BLDG_AGE_dec)
+     filter(HINCP > 0, RNTP > 0, PUMA == 05306) %>%
+     select(HINCP, RNTP, NP, BDSP, HHT_label, BLDG_AGE_dec)
 
 ```
 
 Sample scatterplot:
 
 ```{r sample plot 1, message=FALSE, results='hide'}
-ggplot(TravisCoPUMA, 
+ggplot(Travis_puma_rentals, 
        aes(x = RNTP,
-           y = HINCP)) +
+           y = HINCP,
+           color = BDSP)) +
   geom_point() +
   stat_smooth(method = "lm") +
   scale_size_continuous(name = "Austin rent and income") +
   scale_x_continuous(name = "Monthly rent payment ($)",
-                     breaks = seq(0, 10000, by = 1000),
-                     labels = paste(seq(0, 10000, by = 1000))) +
+                     breaks = seq(0, 10000, by = 500),
+                     labels = paste(seq(0, 10000, by = 500))) +
   scale_y_continuous(name = "Household income within county ($)",
                      breaks = seq(0, 1000000, by = 50000)) +
+  scale_color_continuous(name = "Bedrooms per unit") +
   theme_bw() +
-  theme(legend.key.size = unit(0.1, "cm"))
+  theme(legend.key.size = unit(0.5, "cm"))
 ```
 ```{r}
-ggplot(TravisCoPUMA, 
-       aes(x = MRGP,
-           y = NP)) +
+ggplot(Travis_puma_rentals, 
+       aes(x = HINCP,
+           y = RNTP)) +
   geom_point() +
   stat_smooth(color = "black", linetype = 2, size = 0.5) +
-  scale_x_continuous(name = "Monthly mortgage payment ($)") +
-  scale_y_continuous(name = "Number of people in household") +
+  scale_x_continuous(name = "Household income") +
+  scale_y_continuous(name = "Monthly rent ($)") +
   theme_bw() 
 ```
 
+```{r}
+ggplot(Travis_puma_rentals, 
+       aes(x = HINCP,
+           y = RNTP)) +
+  geom_point() +
+  stat_smooth(color = "black", linetype = 2, size = 0.5) +
+  scale_x_continuous(name = "Household income",
+                             trans = "log",
+                             breaks = c(1000, 10000, 100000, 1000000),
+                             labels = c("1,000", "10,000", "100,000", "1,000,000")) +
+  scale_y_continuous(name = "Monthly rent ($)") +
+  theme_bw() 
+```
 
+```{r same as above but log on other axis, message=FALSE, results='hide'}
+ggplot(Travis_puma_rentals, 
+       aes(x = HINCP,
+           y = RNTP)) +
+  geom_point() +
+  stat_smooth(color = "black", linetype = 2, size = 0.5) +
+  scale_x_continuous(name = "Household income") +
+  scale_y_continuous(name = "Monthly rent ($)") +
+  coord_polar(theta = "x")
+  theme_bw() 
+```
+
+```{r}
+ggplot(Travis_puma_rentals,
+       aes(x = HHT_label,
+           y = RNTP,
+           color = HHT_label)) +
+  geom_point(position = "jitter",
+             size = 0.5,
+             alpha = 0.75) +
+  scale_x_discrete(name = "Household type", 
+                   theme(axis.text.x = element_blank())) +
+  scale_y_continuous(name = "Monthly rent ($)",
+                     breaks = seq(0, 3000, by = 250)) +
+  theme_bw()
+```
+```{r}
+ggplot(Travis_puma_rentals,
+       aes(x = HHT_label,
+           y = RNTP,
+           color = HHT_label)) +
+  geom_boxplot() +
+  scale_x_discrete(name = "Household type", 
+                   theme(axis.text.x = element_blank())) +
+  scale_y_continuous(name = "Monthly rent ($)",
+                     breaks = seq(0, 3000, by = 250)) +
+  theme_bw()
+```
