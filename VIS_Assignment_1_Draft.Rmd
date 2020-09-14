@@ -1,0 +1,128 @@
+---
+title: "Assignment 1 VIS"
+author: "Ryan Johnson"
+date: "9/13/2020"
+output: html_document
+---
+
+```{r libraries, message=FALSE, results='hide', include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(tidycensus)
+library(viridis)
+```
+
+```{r PUMA-level data from Travis Co, TX, message=FALSE, results='hide'}
+TravisCoPUMA <- get_pums(variables = c(
+                                      "PUMA", 
+                                      "HINCP", 
+                                      "RNTP", 
+                                      "MRGP", 
+                                      "NP", 
+                                      "HHT",
+                                      "TEN",
+                                      "YBL"),
+                        state = "TX",
+                        year = 2018, 
+                        survey = "acs1",
+                        recode = TRUE) %>%
+     mutate(PUMA = as.numeric(PUMA)) %>%
+     mutate(BLDG_AGE_dec = case_when(
+      YBL_label == "1939 or earlier" ~ 8,
+      YBL_label == "1940 to 1949" ~ 7,
+      YBL_label == "1950 to 1959" ~ 6,
+      YBL_label == "1960 to 1969" ~ 5,
+      YBL_label == "1970 to 1979" ~ 4,
+      YBL_label == "1980 to 1989" ~ 3,
+      YBL_label == "1990 to 1999" ~ 2,
+      YBL_label == "2000 to 2004" ~ 1,
+      YBL_label == "2005" ~ 1,
+      YBL_label == "2006" ~ 1,
+      YBL_label == "2007" ~ 1,
+      YBL_label == "2008" ~ 1,
+      YBL_label == "2009" ~ 1,
+      YBL_label == "2010" ~ 0,
+      YBL_label == "2011" ~ 0,
+      YBL_label == "2012" ~ 0,
+      YBL_label == "2013" ~ 0,
+      YBL_label == "2014" ~ 0,
+      YBL_label == "2015" ~ 0,
+      YBL_label == "2016" ~ 0,
+      YBL_label == "2017" ~ 0,
+      YBL_label == "2018" ~ 0,)) %>% 
+     filter(HINCP > 12140, RNTP > 0 | MRGP >0, PUMA > 05300 & PUMA < 05310) %>%
+     select(HINCP, RNTP, MRGP, NP, HHT_label, TEN_label, BLDG_AGE_dec)
+
+```
+```{r PUMA-level data from Central Austin only, message=FALSE, results='hide'}
+CentralAustin <- get_pums(variables = c(
+                                      "PUMA", 
+                                      "HINCP", 
+                                      "RNTP", 
+                                      "MRGP", 
+                                      "NP", 
+                                      "HHT",
+                                      "TEN",
+                                      "YBL"),
+                        state = "TX",
+                        year = 2018, 
+                        survey = "acs1",
+                        recode = TRUE) %>%
+     mutate(PUMA = as.numeric(PUMA)) %>%
+     mutate(BLDG_AGE_dec = case_when(
+      YBL_label == "1939 or earlier" ~ 8,
+      YBL_label == "1940 to 1949" ~ 7,
+      YBL_label == "1950 to 1959" ~ 6,
+      YBL_label == "1960 to 1969" ~ 5,
+      YBL_label == "1970 to 1979" ~ 4,
+      YBL_label == "1980 to 1989" ~ 3,
+      YBL_label == "1990 to 1999" ~ 2,
+      YBL_label == "2000 to 2004" ~ 1,
+      YBL_label == "2005" ~ 1,
+      YBL_label == "2006" ~ 1,
+      YBL_label == "2007" ~ 1,
+      YBL_label == "2008" ~ 1,
+      YBL_label == "2009" ~ 1,
+      YBL_label == "2010" ~ 0,
+      YBL_label == "2011" ~ 0,
+      YBL_label == "2012" ~ 0,
+      YBL_label == "2013" ~ 0,
+      YBL_label == "2014" ~ 0,
+      YBL_label == "2015" ~ 0,
+      YBL_label == "2016" ~ 0,
+      YBL_label == "2017" ~ 0,
+      YBL_label == "2018" ~ 0,)) %>% 
+     filter(HINCP > 12140, RNTP > 0 | MRGP >0, PUMA == 05306) %>%
+     select(HINCP, RNTP, MRGP, NP, HHT_label, TEN_label, BLDG_AGE_dec)
+
+```
+
+Sample scatterplot:
+
+```{r sample plot 1, message=FALSE, results='hide'}
+ggplot(TravisCoPUMA, 
+       aes(x = RNTP,
+           y = HINCP)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  scale_size_continuous(name = "Austin rent and income") +
+  scale_x_continuous(name = "Monthly rent payment ($)",
+                     breaks = seq(0, 10000, by = 1000),
+                     labels = paste(seq(0, 10000, by = 1000))) +
+  scale_y_continuous(name = "Household income within county ($)",
+                     breaks = seq(0, 1000000, by = 50000)) +
+  theme_bw() +
+  theme(legend.key.size = unit(0.1, "cm"))
+```
+```{r}
+ggplot(TravisCoPUMA, 
+       aes(x = MRGP,
+           y = NP)) +
+  geom_point() +
+  stat_smooth(color = "black", linetype = 2, size = 0.5) +
+  scale_x_continuous(name = "Monthly mortgage payment ($)") +
+  scale_y_continuous(name = "Number of people in household") +
+  theme_bw() 
+```
+
+
