@@ -10,6 +10,8 @@ library(ggplot2)
 library(tidyverse)
 library(tidycensus)
 library(viridis)
+library(wesanderson)
+library(ggsci)
 ```
 
 ```{r load household vars, message=FALSE, results='hide'}
@@ -19,6 +21,18 @@ hh_vars_2018 <- pums_variables %>%
   filter(level == "housing", year == 2018, survey == "acs1")
 ```
 
+##Defining the data set
+
+Below, I define a data set including the following variables:
+
+* **HINCP** - Household income - continuous
+* **RNTP** - Monthly rent ($) - continuous
+* **NP** - Number of people per household - continuous
+* **BDSP** - Number of bedrooms per household - continuous
+* **HHT_label** - Household type - categorical
+* **BLDG_AGE_dec** - Age of building in decades - categorical
+
+This sample began with all Texas responses from the 2018 ACS 1-year survey, and was further narrowed to include only those households with _some_ household income and monthly rent payment. Then, I added a filter to narrow my data to only those responses collected in Travis County. 
 
 ```{r PUMA-level data from Travis Co, TX, message=FALSE, results='hide'}
 Travis_puma_rentals <- get_pums(variables = c(
@@ -61,6 +75,9 @@ Travis_puma_rentals <- get_pums(variables = c(
      select(HINCP, RNTP, NP, BDSP, HHT_label, BLDG_AGE_dec)
 
 ```
+
+Defining a subset of the above data, representing only the Central Austin PUMA:
+
 ```{r PUMA-level data from Central Austin only, message=FALSE, results='hide'}
 Central_austin_rentals <- get_pums(variables = c(
                                       "PUMA", 
@@ -110,7 +127,7 @@ ggplot(Travis_puma_rentals,
        aes(x = RNTP,
            y = HINCP,
            color = BDSP)) +
-  geom_point() +
+  geom_point(size = 2) +
   stat_smooth(method = "lm") +
   scale_size_continuous(name = "Austin rent and income") +
   scale_x_continuous(name = "Monthly rent payment ($)",
@@ -147,14 +164,17 @@ ggplot(Travis_puma_rentals,
   theme_bw() 
 ```
 
-```{r same as above but log on other axis, message=FALSE, results='hide'}
+```{r same as above but polar, message=FALSE, results='hide'}
 ggplot(Travis_puma_rentals, 
-       aes(x = HINCP,
-           y = RNTP)) +
+       aes(x = RNTP,
+           y = HINCP)) +
   geom_point() +
   stat_smooth(color = "black", linetype = 2, size = 0.5) +
-  scale_x_continuous(name = "Household income") +
-  scale_y_continuous(name = "Monthly rent ($)") +
+  scale_y_continuous(name = "Household income",
+                     trans = "log",
+                     breaks = c(1000, 10000, 100000, 1000000),
+                     labels = c("1,000", "10,000", "100,000", "1,000,000")) +
+  scale_x_continuous(name = "Monthly rent ($)") +
   coord_polar(theta = "x")
   theme_bw() 
 ```
@@ -185,3 +205,27 @@ ggplot(Travis_puma_rentals,
                      breaks = seq(0, 3000, by = 250)) +
   theme_bw()
 ```
+
+```{r}
+pie_chart_1 <- ggplot(Travis_puma_rentals, 
+                      aes(x = 1, fill = HHT_label)) +
+  geom_bar(position = "fill") +
+  coord_polar(theta = "y") +
+  scale_y_continuous(name = "Number of households") +
+  scale_fill_discrete(name = "Household type") +
+  theme_void()
+
+pie_chart_1
+```
+
+```{r, eval=FALSE}
+ggplot(Travis_puma_rentals, 
+       aes(x = NP,
+           y = RNTP)) +
+  geom_histogram(inherit.aes = TRUE) +
+  scale_size_continuous(name = "Austin rent and household size") +
+  scale_x_binned(name = "Number of people per household") +
+  scale_y_continuous(name = "Monthly rent ($)") +
+  theme_bw()
+```
+
