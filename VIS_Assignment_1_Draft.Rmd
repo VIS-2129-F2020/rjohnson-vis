@@ -278,22 +278,14 @@ ggplot(Travis_puma_rentals, aes(x = BLDG_AGE_dec, fill = HHT_label)) +
 
 ```{r, message=FALSE}
 ggplot(Travis_puma_rentals, 
-       aes(x = BLDG_AGE_dec,
+       aes(x = HHT_label,
            y = HINCP,
-           color = BLDG_AGE_dec)) +
+           color = HHT_label)) +
   geom_violin() +
-  scale_x_discrete(name = "Building age (years)",
-                   labels = c("var_name" = "< 10",
-                              "10-20",
-                              "20-30",
-                              "30-40",
-                              "40-50",
-                              "50-60",
-                              "60-70",
-                              "70-80",
-                              "80+")) +
-  scale_y_continuous(name = "Household annual income",
-                     breaks = seq(0, 500000, by = 100,000)) +
+  scale_x_discrete(name = "Household type", element_blank()) +
+  scale_color_discrete(name = "Household type") +
+  scale_y_continuous(name = "Household annual income ($)",
+                     breaks = seq(0, 1000000, by = 100000)) +
   theme_bw()
 ```
 
@@ -303,6 +295,8 @@ ggplot(Travis_puma_rentals,
 ggplot(Travis_puma_rentals, aes(y=HINCP, x=RNTP)) +
   geom_bin2d(bins = 34) +
   scale_fill_continuous(type = "viridis") + 
+  scale_y_continuous(name = "Annual household income ($)") +
+  scale_x_continuous(name = "Monthly rent ($)") +
   theme_minimal()
 ```
 
