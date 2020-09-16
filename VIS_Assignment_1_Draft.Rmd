@@ -1,7 +1,7 @@
 ---
 title: "Assignment 1 VIS"
 author: "Ryan Johnson"
-date: "9/13/2020"
+date: "9/15/2020"
 output: html_document
 ---
 
@@ -21,7 +21,7 @@ hh_vars_2018 <- pums_variables %>%
   filter(level == "housing", year == 2018, survey == "acs1")
 ```
 
-##Defining the data set
+### Defining the data set
 
 Below, I define a data set including the following variables:
 
@@ -120,9 +120,9 @@ Central_austin_rentals <- get_pums(variables = c(
 
 ```
 
-Sample scatterplot:
+### 1.Scatterplot showing multiple variables:
 
-```{r sample plot 1, message=FALSE, results='hide'}
+```{r sample plot 1, message=FALSE}
 ggplot(Travis_puma_rentals, 
        aes(x = RNTP,
            y = HINCP,
@@ -137,9 +137,13 @@ ggplot(Travis_puma_rentals,
                      breaks = seq(0, 1000000, by = 50000)) +
   scale_color_continuous(name = "Bedrooms per unit") +
   theme_bw() +
-  theme(legend.key.size = unit(0.5, "cm"))
+  theme(legend.key.size = unit(0.5, "cm")) +
+  ggsave("A_0_scatterplot.png", width = 5, height = 5)
 ```
-```{r}
+
+### 2. Scatterplot showing rent and household income:
+
+```{r, message=FALSE}
 ggplot(Travis_puma_rentals, 
        aes(x = HINCP,
            y = RNTP)) +
@@ -147,10 +151,13 @@ ggplot(Travis_puma_rentals,
   stat_smooth(color = "black", linetype = 2, size = 0.5) +
   scale_x_continuous(name = "Household income") +
   scale_y_continuous(name = "Monthly rent ($)") +
-  theme_bw() 
+  theme_bw() +
+  ggsave("A_1_scatterplot.png", width = 5, height = 5)
 ```
 
-```{r}
+### 3. Similar scatterplot, set on a logarithmic scale:
+
+```{r, message=FALSE}
 ggplot(Travis_puma_rentals, 
        aes(x = HINCP,
            y = RNTP)) +
@@ -161,10 +168,13 @@ ggplot(Travis_puma_rentals,
                              breaks = c(1000, 10000, 100000, 1000000),
                              labels = c("1,000", "10,000", "100,000", "1,000,000")) +
   scale_y_continuous(name = "Monthly rent ($)") +
-  theme_bw() 
+  theme_bw() +
+  ggsave("A_2_scatterplot.png", width = 5, height = 5)
 ```
 
-```{r same as above but polar, message=FALSE, results='hide'}
+### 4. Same data as _3_, but set on a polar coordinate system:
+
+```{r same as above but polar, message=FALSE}
 ggplot(Travis_puma_rentals, 
        aes(x = RNTP,
            y = HINCP)) +
@@ -175,11 +185,14 @@ ggplot(Travis_puma_rentals,
                      breaks = c(1000, 10000, 100000, 1000000),
                      labels = c("1,000", "10,000", "100,000", "1,000,000")) +
   scale_x_continuous(name = "Monthly rent ($)") +
-  coord_polar(theta = "x")
-  theme_bw() 
+  coord_polar(theta = "x") +
+  theme_bw() +
+  ggsave("A_3_polarplot.png", width = 5, height = 5)
 ```
 
-```{r}
+### 5. Household type and monthly rent represented via "binned" scatterplot:
+
+```{r, message=FALSE}
 ggplot(Travis_puma_rentals,
        aes(x = HHT_label,
            y = RNTP,
@@ -191,9 +204,13 @@ ggplot(Travis_puma_rentals,
                    theme(axis.text.x = element_blank())) +
   scale_y_continuous(name = "Monthly rent ($)",
                      breaks = seq(0, 3000, by = 250)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("A_4_jitterplot.png", width = 5, height = 5)
 ```
-```{r}
+
+### 6. The same data as _5_, represented in a box plot:
+
+```{r, message=FALSE}
 ggplot(Travis_puma_rentals,
        aes(x = HHT_label,
            y = RNTP,
@@ -203,29 +220,89 @@ ggplot(Travis_puma_rentals,
                    theme(axis.text.x = element_blank())) +
   scale_y_continuous(name = "Monthly rent ($)",
                      breaks = seq(0, 3000, by = 250)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("A_1_boxplot.png", width = 5, height = 5)
 ```
 
-```{r}
+### 7. A pie chart showing the humber of households in each housheold type category:
+
+```{r, message=FALSE}
 pie_chart_1 <- ggplot(Travis_puma_rentals, 
                       aes(x = 1, fill = HHT_label)) +
   geom_bar(position = "fill") +
   coord_polar(theta = "y") +
   scale_y_continuous(name = "Number of households") +
   scale_fill_discrete(name = "Household type") +
-  theme_void()
+  theme_void()+
+  ggsave("A_1_piechart.png", width = 5, height = 5)
 
 pie_chart_1
 ```
 
-```{r, eval=FALSE}
+### 8. Bar chart showing number of households, by type and year built:
+
+* This chart presented a challenge in figuring out how to assign labels along the x axis - each cluster of bars should be labeled with a range of years. Unfortunately I tried a variety of different arguments and couldn't solve this problem in time. 
+
+```{r, message=FALSE}
+ggplot(Travis_puma_rentals, aes(x = BLDG_AGE_dec, fill = HHT_label)) +
+  geom_bar(position = "dodge") +
+  scale_y_continuous(name = "Number of households") +
+  scale_x_discrete(name = "Building age (years)",
+                   labels = c("var_name" = "< 10",
+                              "10-20",
+                              "20-30",
+                              "30-40",
+                              "40-50",
+                              "50-60",
+                              "60-70",
+                              "70-80",
+                              "80+")) +
+  scale_fill_discrete(name = "Household type",
+                        labels = c("Married couple",
+                                   "Nonfamily - female - alone",
+                                   "Nonfamily - female - multiple",
+                                   "Nonfamily - male - alone",
+                                   "Nonfamily - male - multiple",
+                                   "Single female parent",
+                                   "Single male parent")) +
+  theme_bw() +
+  coord_cartesian(xlim = c(0, 8),
+                  ylim = c(0, 300)) +
+  ggsave("A_1_clusterbar.png", width = 5, height = 5)
+
+```
+
+### 9. Violin plot of household income and age of building:
+
+* Yet again, this chart type presented difficulties. I may simply be using the wrong variables for this typology, but unfortunately my time has cut close and I want to explore another type.
+
+```{r, message=FALSE}
 ggplot(Travis_puma_rentals, 
-       aes(x = NP,
-           y = RNTP)) +
-  geom_histogram(inherit.aes = TRUE) +
-  scale_size_continuous(name = "Austin rent and household size") +
-  scale_x_binned(name = "Number of people per household") +
-  scale_y_continuous(name = "Monthly rent ($)") +
+       aes(x = BLDG_AGE_dec,
+           y = HINCP,
+           color = BLDG_AGE_dec)) +
+  geom_violin() +
+  scale_x_discrete(name = "Building age (years)",
+                   labels = c("var_name" = "< 10",
+                              "10-20",
+                              "20-30",
+                              "30-40",
+                              "40-50",
+                              "50-60",
+                              "60-70",
+                              "70-80",
+                              "80+")) +
+  scale_y_continuous(name = "Household annual income",
+                     breaks = seq(0, 500000, by = 100,000)) +
   theme_bw()
+```
+
+### 10. Heatmap comparing household income and monthly rent:
+
+```{r, message=FALSE}
+ggplot(Travis_puma_rentals, aes(y=HINCP, x=RNTP)) +
+  geom_bin2d(bins = 34) +
+  scale_fill_continuous(type = "viridis") + 
+  theme_minimal()
 ```
 
