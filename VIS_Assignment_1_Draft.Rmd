@@ -49,28 +49,28 @@ Travis_puma_rentals <- get_pums(variables = c(
                         recode = TRUE) %>%
      mutate(PUMA = as.numeric(PUMA)) %>%
      mutate(BLDG_AGE_dec = case_when(
-      YBL_label == "1939 or earlier" ~ 8,
-      YBL_label == "1940 to 1949" ~ 7,
-      YBL_label == "1950 to 1959" ~ 6,
-      YBL_label == "1960 to 1969" ~ 5,
-      YBL_label == "1970 to 1979" ~ 4,
-      YBL_label == "1980 to 1989" ~ 3,
-      YBL_label == "1990 to 1999" ~ 2,
-      YBL_label == "2000 to 2004" ~ 1,
-      YBL_label == "2005" ~ 1,
-      YBL_label == "2006" ~ 1,
-      YBL_label == "2007" ~ 1,
-      YBL_label == "2008" ~ 1,
-      YBL_label == "2009" ~ 1,
-      YBL_label == "2010" ~ 0,
-      YBL_label == "2011" ~ 0,
-      YBL_label == "2012" ~ 0,
-      YBL_label == "2013" ~ 0,
-      YBL_label == "2014" ~ 0,
-      YBL_label == "2015" ~ 0,
-      YBL_label == "2016" ~ 0,
-      YBL_label == "2017" ~ 0,
-      YBL_label == "2018" ~ 0,)) %>% 
+      YBL_label == "1939 or earlier" ~ "pre-1940s",
+      YBL_label == "1940 to 1949" ~ "1940s",
+      YBL_label == "1950 to 1959" ~ "1950s",
+      YBL_label == "1960 to 1969" ~ "1960s",
+      YBL_label == "1970 to 1979" ~ "1970s",
+      YBL_label == "1980 to 1989" ~ "1980s",
+      YBL_label == "1990 to 1999" ~ "1990s",
+      YBL_label == "2000 to 2004" ~ "2000s",
+      YBL_label == "2005" ~ "2000s",
+      YBL_label == "2006" ~ "2000s",
+      YBL_label == "2007" ~ "2000s",
+      YBL_label == "2008" ~ "2000s",
+      YBL_label == "2009" ~ "2000s",
+      YBL_label == "2010" ~ "2010s",
+      YBL_label == "2011" ~ "2010s",
+      YBL_label == "2012" ~ "2010s",
+      YBL_label == "2013" ~ "2010s",
+      YBL_label == "2014" ~ "2010s",
+      YBL_label == "2015" ~ "2010s",
+      YBL_label == "2016" ~ "2010s",
+      YBL_label == "2017" ~ "2010s",
+      YBL_label == "2018" ~ "2010s")) %>% 
      filter(HINCP > 0, RNTP > 0, PUMA > 05300 & PUMA < 05310) %>%
      select(HINCP, RNTP, NP, BDSP, HHT_label, BLDG_AGE_dec)
 
@@ -93,28 +93,28 @@ Central_austin_rentals <- get_pums(variables = c(
                         recode = TRUE) %>%
      mutate(PUMA = as.numeric(PUMA)) %>%
      mutate(BLDG_AGE_dec = case_when(
-      YBL_label == "1939 or earlier" ~ 8,
-      YBL_label == "1940 to 1949" ~ 7,
-      YBL_label == "1950 to 1959" ~ 6,
-      YBL_label == "1960 to 1969" ~ 5,
-      YBL_label == "1970 to 1979" ~ 4,
-      YBL_label == "1980 to 1989" ~ 3,
-      YBL_label == "1990 to 1999" ~ 2,
-      YBL_label == "2000 to 2004" ~ 1,
-      YBL_label == "2005" ~ 1,
-      YBL_label == "2006" ~ 1,
-      YBL_label == "2007" ~ 1,
-      YBL_label == "2008" ~ 1,
-      YBL_label == "2009" ~ 1,
-      YBL_label == "2010" ~ 0,
-      YBL_label == "2011" ~ 0,
-      YBL_label == "2012" ~ 0,
-      YBL_label == "2013" ~ 0,
-      YBL_label == "2014" ~ 0,
-      YBL_label == "2015" ~ 0,
-      YBL_label == "2016" ~ 0,
-      YBL_label == "2017" ~ 0,
-      YBL_label == "2018" ~ 0,)) %>% 
+      YBL_label == "1939 or earlier" ~ "pre-1940s",
+      YBL_label == "1940 to 1949" ~ "1940s",
+      YBL_label == "1950 to 1959" ~ "1950s",
+      YBL_label == "1960 to 1969" ~ "1960s",
+      YBL_label == "1970 to 1979" ~ "1970s",
+      YBL_label == "1980 to 1989" ~ "1980s",
+      YBL_label == "1990 to 1999" ~ "1990s",
+      YBL_label == "2000 to 2004" ~ "2000s",
+      YBL_label == "2005" ~ "2000s",
+      YBL_label == "2006" ~ "2000s",
+      YBL_label == "2007" ~ "2000s",
+      YBL_label == "2008" ~ "2000s",
+      YBL_label == "2009" ~ "2000s",
+      YBL_label == "2010" ~ "2010s",
+      YBL_label == "2011" ~ "2010s",
+      YBL_label == "2012" ~ "2010s",
+      YBL_label == "2013" ~ "2010s",
+      YBL_label == "2014" ~ "2010s",
+      YBL_label == "2015" ~ "2010s",
+      YBL_label == "2016" ~ "2010s",
+      YBL_label == "2017" ~ "2010s",
+      YBL_label == "2018" ~ "2010s")) %>% 
      filter(HINCP > 0, RNTP > 0, PUMA == 05306) %>%
      select(HINCP, RNTP, NP, BDSP, HHT_label, BLDG_AGE_dec)
 
@@ -299,4 +299,5 @@ ggplot(Travis_puma_rentals, aes(y=HINCP, x=RNTP)) +
   scale_x_continuous(name = "Monthly rent ($)") +
   theme_minimal()
 ```
+
 
