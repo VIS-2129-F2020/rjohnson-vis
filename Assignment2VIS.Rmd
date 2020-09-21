@@ -2,9 +2,54 @@
 title: "Assignment 2"
 author: "Ryan Johnson"
 date: "9/17/2020"
-output: html_document
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 3  
+    toc_float: yes
+    theme: cosmo
 ---
+```{r load libraries, include=FALSE}
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(tidyverse)
+library(ggspatial)
+library(cartogram)
+library(ggthemes)
+```
 
-## Description
+# Assignment info DELETE ME
+Select a large area from Table C-1 below, and create a map of the area, with its associated subareas,
+using each of three different map projections. Indicate the map projection you’ve used for each. Identify a
+variable and use at least three different methods to show how it varies among the subareas.
+# DELETE THE ABOVE
 
-etc etc
+
+### Description EDIT ME
+
+*blah blah blah*
+
+### Map of Europe - ____ projection
+
+```{r example world map, message=FALSE}
+world <- ne_countries(scale = 50, returnclass = "sf") 
+
+world_map <- ggplot(world) +
+  geom_sf() +
+  theme_economist_white()
+
+world_map
+```
+
+```{r europe reference, message=FALSE}
+eur_countries <- world %>%
+  filter(continent == "Europe")
+
+eur_map <- ggplot(eur_countries) +
+  geom_sf() +
+  theme_economist_white()
+
+eur_map
+```
+
