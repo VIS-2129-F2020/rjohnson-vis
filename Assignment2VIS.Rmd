@@ -107,20 +107,27 @@ state_data
 ```
 
 ```{r join attempt 1, message=FALSE}
-density_states <-USA_transformed %>%
-  left_join(state_data, by = c("name" = "ï..State")) %>%
+density_states <- USA_transformed %>%
+  left_join(state_data, by = c("name" = "State")) %>%
   select(name, Density)
+
+USA_density <- density_states %>%
+    filter(name != "District of Columbia")
 ```
 
 ```{r map density 1, message=FALSE}
-ggplot(density_states, aes(fill = Density)) +
+ggplot(USA_density, aes(fill = Density)) +
   geom_sf(color = NA) +
-  scale_fill_viridis_d(
-    name = "Population density per square mile",
+  scale_fill_continuous_tableau(
+    palette = "Blue-Teal",
+    name = "People per \nsquare mile \nJuly 2019 \n ",
     breaks = seq(0, 1200, by = 300),
     labels = formatC(seq(0, 1200, by = 300), 
                      big.mark = ",", format = "f", digits = 0)) +
   theme_economist_white() +
-  theme(legend.background = element_blank())
+  theme(legend.background = element_blank(),
+        legend.position = "left") +
+  ggtitle("Population density of contiguous 48 states", )
+  
 ```
 

@@ -1,55 +1,54 @@
-﻿State,Density
-,
-District of Columbia,"11,569.7"
-New Jersey,"1,207.8"
-Rhode Island,"1,024.5"
-Puerto Rico,932.7
-Massachusetts,883.5
-Connecticut,736.6
-Maryland,622.9
-Delaware,499.6
-New York,412.8
-Florida,400.7
-Ohio,286.1
-Pennsylvania,286.1
-California,253.7
-Illinois,228.2
-Hawaii,220.3
-Virginia,216.1
-North Carolina,215.7
-Indiana,187.9
-Georgia,184.6
-Michigan,176.7
-South Carolina,171.2
-Tennessee,165.6
-New Hampshire,151.9
-Washington,114.6
-Kentucky,113.1
-Texas,111
-Louisiana,107.6
-Wisconsin,107.5
-Alabama,96.8
-United States,92.9
-Missouri,89.3
-West Virginia,74.6
-Minnesota,70.8
-Vermont,67.7
-Arizona,64.1
-Mississippi,63.4
-Arkansas,58
-Oklahoma,57.7
-Iowa,56.5
-Colorado,55.6
-Oregon,43.9
-Maine,43.6
-Utah,39
-Kansas,35.6
-Nevada,28.1
-Nebraska,25.2
-Idaho,21.6
-New Mexico,17.3
-South Dakota,11.7
-North Dakota,11
-Montana,7.3
-Wyoming,6
-Alaska,1.3
+﻿,State,Density
+1,District of Columbia,11569.7
+2,New Jersey,1207.8
+3,Rhode Island,1024.5
+4,Puerto Rico,932.7
+5,Massachusetts,883.5
+6,Connecticut,736.6
+7,Maryland,622.9
+8,Delaware,499.6
+9,New York,412.8
+10,Florida,400.7
+11,Ohio,286.1
+12,Pennsylvania,286.1
+13,California,253.7
+14,Illinois,228.2
+15,Hawaii,220.3
+16,Virginia,216.1
+17,North Carolina,215.7
+18,Indiana,187.9
+19,Georgia,184.6
+20,Michigan,176.7
+21,South Carolina,171.2
+22,Tennessee,165.6
+23,New Hampshire,151.9
+24,Washington,114.6
+25,Kentucky,113.1
+26,Texas,111
+27,Louisiana,107.6
+28,Wisconsin,107.5
+29,Alabama,96.8
+30,United States,92.9
+31,Missouri,89.3
+32,West Virginia,74.6
+33,Minnesota,70.8
+34,Vermont,67.7
+35,Arizona,64.1
+36,Mississippi,63.4
+37,Arkansas,58
+38,Oklahoma,57.7
+39,Iowa,56.5
+40,Colorado,55.6
+41,Oregon,43.9
+42,Maine,43.6
+43,Utah,39
+44,Kansas,35.6
+45,Nevada,28.1
+46,Nebraska,25.2
+47,Idaho,21.6
+48,New Mexico,17.3
+49,South Dakota,11.7
+50,North Dakota,11
+51,Montana,7.3
+52,Wyoming,6
+53,Alaska,1.3
