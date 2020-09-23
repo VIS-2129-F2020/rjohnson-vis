@@ -20,17 +20,13 @@ library(ggthemes)
 library(rnaturalearthhires)
 ```
 
-# Assignment info DELETE ME
-Select a large area from Table C-1 below, and create a map of the area, with its associated subareas,
-using each of three different map projections. Indicate the map projection you’ve used for each. Identify a
-variable and use at least three different methods to show how it varies among the subareas.
-# DELETE THE ABOVE
+## Description
 
+This assignment deals with visualizing various map projections and utilizing maps to demonstrate variations in data.
 
-### Description EDIT ME
+## Map projections
 
-*blah blah blah*
-
+In this section, I create a map of the contiguous 48 US states, and project it using three different projections - the Albers equal area projection, the Texas State Plane - Central Zone 3 (a variant of the Lambert Conformal Conic projection), and the Gall-Peters projection. These coordinate systems are stored in the following vectors:
 
 ```{r defining coordinate systems, message=FALSE}
 USA_AEA <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs"
@@ -41,7 +37,9 @@ GallPeters <- "+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 +ellps=WGS84 +units=m
 
 ### Map of continental United States - Gall-Peters projection
 
+First, I create a new data frame entitled **USA_States** which contains the r/naturalearth simple features information for the contiguous 48 US states. 
 
+Then, I plot this using the Gall-Peters projection. 
 
 ```{r US attempt, message=FALSE}
 USA_states <- ne_states(country = "United States of America",
@@ -58,9 +56,9 @@ USA_map +
   annotation_scale()
 ```
 
-### Map of continental United States - Albers Equal Area projection
+### Map of continental United States - Albers equal area projection
 
-
+The same map as above, plotted using the Albers equal area projection. 
 
 ```{r equal area usa, message=FALSE}
 ggplot(USA_states) +
@@ -72,7 +70,7 @@ ggplot(USA_states) +
 
 ### Map of continental United States - Texas State Plane (Lambert conformal conic) projection
 
-
+Once more, the same as above, plotted using the Texas State Plane Zone 3 Lambert projection.
 
 ```{r texas state plane zone 3, message=FALSE}
 ggplot(USA_states) +
@@ -84,30 +82,33 @@ ggplot(USA_states) +
 
 ### Transforming coordinate system - AEA
 
-
+Finally, I transform **USA_states** into an AEA projected coordinate system. This projected data is stored in **USA_transform_AEA** for use in the next section.
 
 ```{r, message=FALSE}
-USA_transformed <- USA_states %>%
+USA_transform_AEA <- USA_states %>%
   st_transform(crs = USA_AEA)
 
-ggplot(USA_transformed) +
+ggplot(USA_transform_AEA) +
   geom_sf() +
   theme_economist_white() +
   annotation_scale()
 ```
 
-### Chloropleth map
+## Visualization of variable(s)
 
-description
+In this section, I create a chloropleth map, cartograms, and a proportional symbol map to visualize the spatial distribution and variation of population density in the contiguous 48 states. 
+
+To accomplish this, I load a dataset from the US Census Bureau containing the name of each state and its population density (measured in people per square mile). I name this data frame **state_data**.
 
 ```{r data manipulation, message=FALSE}
 state_data <- read.csv("USA_pop_density.csv")
 
-state_data
 ```
 
+Next, I join this density data to my **USA_transform_AEA** data frame, then filter out the District of Columbia (with a density of over 11,000 people/sq. mi., this was an extreme outlier, and its small size made it invisible on the maps), resulting in the new frame **USA_density**.
+
 ```{r join attempt 1, message=FALSE}
-density_states <- USA_transformed %>%
+density_states <- USA_transform_AEA %>%
   left_join(state_data, by = c("name" = "State")) %>%
   select(name, Density)
 
@@ -115,19 +116,138 @@ USA_density <- density_states %>%
     filter(name != "District of Columbia")
 ```
 
+### Chloropleth map
+
+Below, I plot my **USA_density** data frame with a fill correlated to the density value. I use a logarithmic scale for the density values, as the data included a few observations over 1,000 people/sq. mi., and many observations in the 5 to 500 people/sq. mi. range. 
+
 ```{r map density 1, message=FALSE}
 ggplot(USA_density, aes(fill = Density)) +
-  geom_sf(color = NA) +
-  scale_fill_continuous_tableau(
-    palette = "Blue-Teal",
-    name = "People per \nsquare mile \nJuly 2019 \n ",
-    breaks = seq(0, 1200, by = 300),
-    labels = formatC(seq(0, 1200, by = 300), 
-                     big.mark = ",", format = "f", digits = 0)) +
+  geom_sf(color = "grey75") +
+  scale_fill_viridis_c(name = "People per\nsquare mile",
+                       trans = "log",
+                       breaks = c(0, 10, 20, 50, 100, 200, 500, 1000),
+                       labels = formatC(c(0, 10, 20, 50, 100, 200, 500, 1000), 
+                                        big.mark = ",", format = "f", digits = 0)) +
   theme_economist_white() +
   theme(legend.background = element_blank(),
-        legend.position = "left") +
-  ggtitle("Population density of contiguous 48 states", )
+        legend.position = "left",
+        legend.text = element_text(size = 10)) +
+  ggtitle("Population density of contiguous 48 states\n")
   
 ```
 
+### Cartograms
+
+The following three variants of cartograms represent the same density data as above with fill, while manipulating the size of each state in relation to its 2019 estimated total population.
+
+Because my **USA_Density** dataset included only *Density* and *name* variables, I had to add a third, *pop2019*, by performing another join() function. The data I added was the US Census Bureau's 2019 state population estimate.
+
+```{r load population data, message=FALSE}
+USA_pop <- read.csv("USA_pop_2019.csv")
+```
+
+```{r join population and density, message=FALSE}
+USA_density_pop <- USA_density %>%
+  left_join(USA_pop, by = "name") %>%
+  filter(name != "District of Columbia") %>%
+  select(name, Density, pop2019)
+
+```
+
+#### **Continuous cartogram**
+
+This cartogram distorts the shape and area of each state according to population size.
+
+```{r cont cartogram, message=FALSE}
+density_cart_cont <- USA_density_pop %>%
+  cartogram_cont("pop2019")
+
+```
+
+```{r plot cont cartogram, message=FALSE}
+ggplot(density_cart_cont, aes(fill = Density)) +
+  geom_sf(color = "grey75") +
+  scale_fill_viridis_c(name = "People per\nsquare mile",
+                       trans = "log",
+                       breaks = c(0, 10, 20, 50, 100, 200, 500, 1000),
+                       labels = formatC(c(0, 10, 20, 50, 100, 200, 500, 1000), 
+                                        big.mark = ",", format = "f", digits = 0)) +
+  theme_economist_white() +
+  theme(legend.background = element_blank(),
+        legend.position = "left",
+        legend.text = element_text(size = 10))
+```
+
+#### **Non-continuous cartogram**
+
+This cartogram distorts the area of each state, but not the shape. 
+
+```{r non-cont cartogram, message=FALSE}
+density_cart_ncont <- USA_density_pop %>%
+  cartogram_ncont("pop2019")
+
+```
+
+```{r plot non-cont cartogram, message=FALSE}
+ggplot(density_cart_ncont, aes(fill = Density)) +
+  geom_sf(color = "grey75") +
+  scale_fill_viridis_c(name = "People per\nsquare mile",
+                       trans = "log",
+                       breaks = c(0, 10, 20, 50, 100, 200, 500, 1000),
+                       labels = formatC(c(0, 10, 20, 50, 100, 200, 500, 1000),
+                                        big.mark = ",", format = "f", digits = 0)) +
+  theme_economist_white() +
+  theme(legend.background = element_blank(),
+        legend.position = "left",
+        legend.text = element_text(size = 10))
+
+```
+
+#### **Dorling cartogram**
+
+In the Dorling cartogram, the state outlines are replaced entirely by circles scaled to population size.
+
+```{r dorling cart, message=FALSE}
+density_cart_dorling <- USA_density_pop %>%
+  cartogram_dorling("pop2019")
+
+```
+
+```{r}
+ggplot(density_cart_dorling, aes(fill = Density)) +
+  geom_sf(color = NA) +
+  scale_fill_viridis_c(name = "People per\nsquare mile",
+                       trans = "log",
+                       breaks = c(0, 10, 20, 50, 100, 200, 500, 1000),
+                       labels = formatC(c(0, 10, 20, 50, 100, 200, 500, 1000),
+                                        big.mark = ",", format = "f", digits = 0)) +
+  theme_economist_white() +
+  theme(legend.background = element_blank(),
+        legend.position = "left",
+        legend.text = element_text(size = 10))
+
+```
+
+### Proportional symbol map
+
+Finally, the proportional symbol map below places a filled circle scaled to the density value over each state. For this map, I reverted to a linear scale for density, as the logarithmic scale resulted in too many large circles, which made the map difficult to interpret. 
+
+```{r proportional symbol, message=FALSE}
+density_centroids <- USA_density_pop %>%
+  st_centroid()
+
+ggplot(USA_transform_AEA) +
+  geom_sf(fill = NA, color = "grey75") +
+  geom_sf(data = density_centroids,
+          aes(size = Density),
+          alpha = 0.3, color = "darkviolet") +
+  scale_size_continuous(name = "People per\nsquare mile",
+                        breaks = seq(0, 1000, by = 250),
+                        labels = formatC(seq(0, 1000, by = 250),
+                                         big.mark = ",", format = "f", digits = 0),
+                        range = c(0, 15)) +
+  theme_economist_white() +
+  theme(legend.background = element_blank(),
+        legend.position = "left",
+        legend.text = element_text(size = 10))
+```
