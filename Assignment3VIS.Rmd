@@ -1,0 +1,100 @@
+---
+title: "Assignment 3 VIS"
+author: "Ryan Johnson"
+date: "9/27/2020"
+output: html_document
+---
+
+```{r libraries, message=FALSE, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(ggthemes)
+library(ggspatial)
+library(sf)
+library(nngeo)
+library(units)
+```
+
+Identify a municipal open data portal and find two point layers (A and B) and two polygon layers (C and
+D).
+Calculate six of the following 22 possible metrics, and illustrate the results of each calculation with a map.
+Each of the four layers you selected should appear in at least one of those six maps.
+
+## Description
+
+Sources: https://data.austintexas.gov/ & https://data.texas.gov/
+
+__Layers:__
+
+A. CoA affordable housing inventory (point)
+```{r loading housing inventory, message=FALSE, echo=FALSE}
+Afford <- st_read("DataLoads927/AffordableIndexLayer.shp", quiet = TRUE)
+```
+
+B. Capital Metro transit stops (point) - includes only bus/train stops within Austin proper
+```{r loading metro stops, message=FALSE, echo=FALSE}
+CMTA <- st_read("DataLoads927/Stops.shp", quiet = TRUE) %>% 
+  filter(CITY == "Austin")
+```
+
+C. CoA zoning map (polygon) - filtered to include only those parcels zoned for Planned Unit Development (PUD)
+```{r loading and cleaning zoning, message=FALSE, echo=FALSE}
+Zoning <- st_read("DataLoads927/geo_export_03a6167a-6c0b-498f-9e12-55f03963c9af.shp", quiet = TRUE)
+```
+
+```{r PUD cleaning, message=FALSE, echo=FALSE}
+PUDs <- Zoning %>%
+  filter(zoning_zty == "PUD")
+```
+
+D. CoA council districts (polygon)
+```{r loading and council districts, message=FALSE, echo=FALSE}
+Council <- st_read("DataLoads927/geo_export_a9775d2b-b31e-4b39-aa22-162244365c95.shp", quiet = TRUE) 
+```
+
+__Metrics:__
+
+1. Average distance b/w A points and their nearest respective B points,
+2. Number and proportion of A points in each D polygon,
+3. Number and proportion of B points in each D polygon,
+4. The number and proportion of C polygons containing A points,
+5. The average density of B points in each D polygon, and
+6. The average density of A points in each D polygon
+
+```{r crs st plane central, include=FALSE}
+TxStateCent <- "+proj=lcc +lat_1=30.11666666666667 +lat_2=31.88333333333333 +lat_0=29.66666666666667 +lon_0=-100.3333333333333 +x_0=700000 +y_0=3000000 +ellps=GRS80 +units=m +no_defs"
+```
+
+```{r transforming coordinate system, message=FALSE}
+
+CMTA2 <- CMTA %>%
+  st_transform(TxStateCent)
+
+PUDs2 <- PUDs %>%
+  st_transform(TxStateCent)
+
+Council2 <- Council %>%
+  st_transform(TxStateCent)
+
+Afford2 <- Afford %>%
+  st_transform(TxStateCent)
+```
+
+```{r example map, message=FALSE}
+ggplot(Council2) +
+  geom_sf(fill = "cornsilk", color = NA) +
+  geom_sf(data = PUDs2, color = "lightblue", fill = "lightblue3") +
+  geom_sf(data = Afford2, color = "magenta", size = 0.01) +
+  geom_sf(data = CMTA2, color = "orange", size = 0.02) +
+  theme_map() +
+  annotation_scale()
+```
+
+
+## Metrics
+
+
+
+
+
+
