@@ -65,6 +65,8 @@ __Metrics:__
 TxStateCent <- "+proj=lcc +lat_1=30.11666666666667 +lat_2=31.88333333333333 +lat_0=29.66666666666667 +lon_0=-100.3333333333333 +x_0=700000 +y_0=3000000 +ellps=GRS80 +units=m +no_defs"
 ```
 
+Before performing the spatial analyses, I transform the data I am using to the TX state plane projected coordinate system.
+
 ```{r transforming coordinate system, message=FALSE}
 
 CMTA2 <- CMTA %>%
@@ -80,6 +82,8 @@ Afford2 <- Afford %>%
   st_transform(TxStateCent)
 ```
 
+Map displaying the four layers:
+
 ```{r example map, message=FALSE}
 ggplot(Council2) +
   geom_sf(fill = "cornsilk", color = NA) +
@@ -87,14 +91,53 @@ ggplot(Council2) +
   geom_sf(data = Afford2, color = "magenta", size = 0.01) +
   geom_sf(data = CMTA2, color = "orange", size = 0.02) +
   theme_map() +
-  annotation_scale()
+annotation_scale(unit_category = "imperial")
 ```
 
 
 ## Metrics
 
+Visualization of a 400-meter buffer around each Capital Metro transit stop.
+
+
+```{r buffer trial, message=FALSE}
+CMTA2_buffer <- st_buffer(CMTA2, dist = 400) %>%
+  st_union()
+
+ggplot(Council2) +
+  geom_sf(fill = "cornsilk", color = NA) +
+  geom_sf(data = CMTA2_buffer, color = "orange") +
+  theme_map() +
+  annotation_scale(unit_category = "imperial")
+```
+
+The location of affordable housing developments (in magenta) which fall within the 400-meter buffer. 
+
+```{r subset affordable 400m cmta2, message=FALSE}
+afford_cmta <- Afford2[CMTA2_buffer,]
+
+ggplot(Council2) +
+  geom_sf(fill = "cornsilk", color = NA) +
+  geom_sf(data = CMTA2_buffer, color = "orange") +
+  geom_sf(data = afford_cmta,
+          color = "magenta",
+          size = 0.01) +
+  theme_map() +
+  annotation_scale(unit_category = "imperial")
+```
+### PROBLEM HERE:
+
+```{r affordable by transit, message=FALSE, eval=FALSE}
+Afford2 <- Afford2 %>%
+  st_join(afford_cmta) %>%
+  mutate(by_cmta = !is.na(Name.y)) 
+```
 
 
 
+```{r affordable in buffer, message=FALSE, eval=FALSE}
+n_afford_cmta <- sum(Afford2$by_cmta)
 
+n_afford_cmta
+```
 
