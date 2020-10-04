@@ -15,20 +15,25 @@ library(nngeo)
 library(units)
 ```
 
-Identify a municipal open data portal and find two point layers (A and B) and two polygon layers (C and
-D).
-Calculate six of the following 22 possible metrics, and illustrate the results of each calculation with a map.
-Each of the four layers you selected should appear in at least one of those six maps.
 
 ## Description
 
-Sources: https://data.austintexas.gov/ & https://data.texas.gov/
+I have assembled a set of four layers of Austin information from the City of Austin and State of Texas open data portals. This set includes two point layers (the locations of Capital Metro transit stops, and the locations of developments which include at least one unit of affordable housing) and two polygon layers (a map of Austin city council district boundaries, and a map of areas zoned for Planned Unit Developments by the City of Austin). The PUD layer was created by downloading a shapefile of Austin's entire zoning map, then filtering it to include only those areas with a PUD designation.
+
+I will perform spatial analysis on these layers to describe the six metrics indicated below.
+
+Source links: https://data.austintexas.gov/ & https://data.texas.gov/
 
 __Layers:__
 
 A. CoA affordable housing inventory (point)
 ```{r loading housing inventory, message=FALSE, echo=FALSE}
 Afford <- st_read("DataLoads927/AffordableIndexLayer.shp", quiet = TRUE)
+```
+
+```{r clean afford, message=FALSE}
+Afford <- Afford %>%
+  filter(Total_Affo > 0)
 ```
 
 B. Capital Metro transit stops (point) - includes only bus/train stops within Austin proper
@@ -54,12 +59,12 @@ Council <- st_read("DataLoads927/geo_export_a9775d2b-b31e-4b39-aa22-162244365c95
 
 __Metrics:__
 
-1. Average distance b/w A points and their nearest respective B points,
-2. Number and proportion of A points in each D polygon,
-3. Number and proportion of B points in each D polygon,
-4. The number and proportion of C polygons containing A points,
-5. The average density of B points in each D polygon, and
-6. The average density of A points in each D polygon
+1. The number and proportion of A points within a specified distance of B points,
+2. Average distance b/w A points and their nearest respective B points,
+3. Number and proportion of A points in each D polygon,
+4. The average density of A points in each D polygon,
+5. The average density of B points in each D polygon, and 
+6. The number and proportion of C polygons containing A points.
 
 ```{r crs st plane central, include=FALSE}
 TxStateCent <- "+proj=lcc +lat_1=30.11666666666667 +lat_2=31.88333333333333 +lat_0=29.66666666666667 +lon_0=-100.3333333333333 +x_0=700000 +y_0=3000000 +ellps=GRS80 +units=m +no_defs"
@@ -82,25 +87,28 @@ Afford2 <- Afford %>%
   st_transform(TxStateCent)
 ```
 
-Map displaying the four layers:
+Below, a map displaying the four layers:
 
-```{r example map, message=FALSE}
+```{r example map, message=FALSE, fig.width=8, fig.height=8}
 ggplot(Council2) +
   geom_sf(fill = "cornsilk", color = NA) +
   geom_sf(data = PUDs2, color = "lightblue", fill = "lightblue3") +
-  geom_sf(data = Afford2, color = "magenta", size = 0.01) +
-  geom_sf(data = CMTA2, color = "orange", size = 0.02) +
+  geom_sf(data = Afford2, color = "magenta", size = 0.5) +
+  geom_sf(data = CMTA2, color = "orange", size = 0.5) +
   theme_map() +
-annotation_scale(unit_category = "imperial")
+  annotation_scale(unit_category = "imperial") +
+  annotation_north_arrow(location = "tr", 
+                         style = north_arrow_minimal())
 ```
 
 
 ## Metrics
 
-Visualization of a 400-meter buffer around each Capital Metro transit stop.
+### 1. The number and proportion of affordable housing developments within a specified distance of transit stops
 
+First, I will establish a "buffer" around all of the Capital Metro transit stops within the City of Austin. I set this buffer at 400 meters, as a cursory Google search revealed this to be one fairly-accepted standard for a 5-minute walking distance.
 
-```{r buffer trial, message=FALSE}
+```{r buffer trial, message=FALSE, fig.width=8, fig.height=8}
 CMTA2_buffer <- st_buffer(CMTA2, dist = 400) %>%
   st_union()
 
@@ -108,12 +116,14 @@ ggplot(Council2) +
   geom_sf(fill = "cornsilk", color = NA) +
   geom_sf(data = CMTA2_buffer, color = "orange") +
   theme_map() +
-  annotation_scale(unit_category = "imperial")
+  annotation_scale(unit_category = "imperial") +
+  annotation_north_arrow(location = "tr", 
+                         style = north_arrow_minimal())
 ```
 
-The location of affordable housing developments (in magenta) which fall within the 400-meter buffer. 
+Next I create a new data frame called __"afford_cmta"__ which includes those of affordable housing developments (in magenta) which fall within the 400-meter transit buffer.
 
-```{r subset affordable 400m cmta2, message=FALSE}
+```{r subset affordable 400m cmta2, message=FALSE, fig.width=8, fig.height=8}
 afford_cmta <- Afford2[CMTA2_buffer,]
 
 ggplot(Council2) +
@@ -121,23 +131,274 @@ ggplot(Council2) +
   geom_sf(data = CMTA2_buffer, color = "orange") +
   geom_sf(data = afford_cmta,
           color = "magenta",
-          size = 0.01) +
+          size = 0.5) +
   theme_map() +
-  annotation_scale(unit_category = "imperial")
+  annotation_scale(unit_category = "imperial") +
+  annotation_north_arrow(location = "tr", 
+                         style = north_arrow_minimal())
 ```
-### PROBLEM HERE:
 
-```{r affordable by transit, message=FALSE, eval=FALSE}
+After visualizing these locations, I want to see the number and percentage of affordable developments within the 400-meter buffer. Before calculating these values, I further clean the __"Afford2"__ data frame to remove duplicate values, as this originally caused a major error in the code. Kristy helped me to figure out what was causing this problem, and provided the "st_intersection" function as a solution.
+
+```{r affordable by transit, message=FALSE}
 Afford2 <- Afford2 %>%
   st_join(afford_cmta) %>%
-  mutate(by_cmta = !is.na(Name.y)) 
+  mutate(by_cmta = !is.na(Project_ID.y)) %>%
+  st_intersection()
+
 ```
 
+First, the number:
 
-
-```{r affordable in buffer, message=FALSE, eval=FALSE}
+```{r affordable in buffer, message=FALSE}
 n_afford_cmta <- sum(Afford2$by_cmta)
 
 n_afford_cmta
 ```
+And the percent share: 
+
+```{r afford in buffer percentage, message=FALSE}
+n_afford <- nrow(Afford2)
+
+pct_cmta_afford <- n_afford_cmta / n_afford
+
+pct_cmta_afford*100
+```
+There are 939 affordable housing developments in Austin within 400 meters of a transit stop - this represents 61% of the total number of affordable housing developments (1539, after removing duplicate entries). 
+
+### 2. Average distance between affordable housing developments and their nearest respective transit stops
+
+```{r distance to nearest stop, message=FALSE}
+Afford2 <- Afford2 %>%
+  mutate(CMTA_dist = st_nn(Afford2, CMTA2, 
+                           returnDist = TRUE)$dist) %>%
+  mutate(CMTA_dist = as.numeric(CMTA_dist))
+```
+
+```{r average ditance afford2 cmta, message=FALSE}
+avg_CMTA_dist <- mean(Afford2$CMTA_dist)
+
+avg_CMTA_dist
+```
+Here we see that the average distance from an affordable housing development to the nearest transit stop is approximately 493 meters. 
+
+This relationship is plotted below, where I colorize the affordable housing development symbols by their distance from a transit stop.
+
+```{r plot dist afford cmta, message=FALSE, fig.width=8, fig.height=8}
+right_side <- st_bbox(Afford2)$xmax
+left_side  <- st_bbox(Afford2)$xmin
+top_side <- st_bbox(Afford2)$ymax
+bottom_side <- st_bbox(Afford2)$ymin
+
+
+ggplot(Council2) +
+  geom_sf(fill = "cornsilk", 
+          color = NA) +
+  geom_sf(data = Afford2,
+          aes(color = CMTA_dist),
+          size = 1) +
+  coord_sf(xlim = c(left_side, right_side), 
+           ylim = c(bottom_side, top_side), expand = FALSE) +
+  scale_color_viridis_c(trans = "log",
+                        name = "Affordable housing developments\nby distance to transit stop") +
+  annotate(geom = "text", x = left_side + 300, 
+           y = top_side - 550, 
+           label = paste("On average, an affordable housing development\nis ", 
+                         prettyNum(avg_CMTA_dist, digits = 3),
+                         " meters from a transit stop in Austin.",
+                         sep = ""),
+           hjust = 0, vjust = 1, size = 3.5) +
+  theme_map() +
+  annotation_scale(unit_category = "imperial",
+                   location = "br") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  theme(panel.background = element_rect(fill = "gray75",
+                                        color = NA),
+        legend.background = element_rect(fill = alpha("white", 0.6), 
+                                         color = "gray95"))
+```
+
+### 3. Number and proportion of affordable housing developments in each council district
+
+In this section I will calculate the number and proportion of affordable housing developments located in each of Austin's ten city council districts. 
+
+```{r affordable by council, message=FALSE}
+Council2 <- Council2 %>%
+  mutate(num_afford = lengths(st_covers(Council2, Afford2)))
+
+```
+
+```{r, message=FALSE}
+summary(Council2$num_afford)
+```
+
+First, I subset my data frame of affordable housing developments to include only those within the city limits of Austin - the original data frame extended slightly outside of the city limits.
+
+This map shows the location of the city's ten council districts, and the affordable housing developments within each one. 
+
+```{r subset affordable by council, message=FALSE, fig.width=8, fig.height=8}
+afford_councils <- Afford2[Council2,]
+
+ggplot(Council2) +
+  geom_sf(fill = alpha(Council2$council_di, 0.3), color = Council2$council_di) +
+  geom_sf(data = afford_councils,
+          color = "magenta",
+          size = 0.5) +
+  theme_map() +
+  annotation_scale(unit_category = "imperial") +
+  annotation_north_arrow(location = "tr", 
+                         style = north_arrow_minimal())
+```
+
+The chloropleth map below uses the same data to colorize each council district according to its number of affordable developments - it becomes clear that the central and eastern district house more affordable housing developments than the western districts of the city. 
+
+```{r afford by council map, message=FALSE, fig.width=8, fig.height=8}
+ggplot(Council2) +
+  geom_sf(color = "white", 
+          aes(fill = num_afford)) +
+  scale_fill_viridis_c(name = "Number of affordable developments\nby council district",
+                       breaks = breaks <- seq(0, 500, by = 100)) +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.75), 
+                                         color = "gray")) +
+  annotation_scale(location = "br",
+                   unit_category = "imperial")
+
+```
+
+
+
+### 4. The average density of affordable housing developments in each council district
+
+In order to calculate the density of affordable developments in each council district, I must first find the area of each council district. I will plot the results of this density calculation on another chloropleth below. 
+
+```{r council area, message=FALSE, fig.width=8, fig.height=8}
+Council2 <- Council2 %>%
+  mutate(area = set_units(st_area(Council2), km^2)) %>%
+  mutate(afford_dens = as.numeric(num_afford / area))
+
+ggplot(Council2) +
+  geom_sf(color = "gray95", 
+          aes(fill = afford_dens)) +
+  scale_fill_viridis_c(name = "Austin council districts\nby affordable housing density\n",
+                       breaks = breaks <- seq(0, 18, by = 3),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "developments per sq. km"),
+                       option = "plasma") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.75), 
+                                         color = "gray"),
+        panel.background = element_rect(fill = "gray95",
+                                        color = NA)) +
+  annotation_scale(location = "br",
+                   unit_category = "imperial")
+```
+
+Below, a summary of the affordable housing density statistics shows that the interquartile range of densities range from 0.18 to 3.15 developments per square km, with a maximum of 17.4 per sq. km in the central council district. The chloropleth map shows that there is an even stronger concentration of affordable housing densities, with the central council district containing more than twice as many affordable developments per square km than any other. 
+
+```{r summ council afford, message=FALSE}
+summary(Council2$afford_dens)
+```
+
+### 5. The average density of transit stops in each council district
+
+Next, I repeat the process from metric #4 to determine the density of transit stops in each council district.
+
+```{r council cmta, message=FALSE, fig.width=8, fig.height=8}
+Council2 <- Council2 %>%
+  mutate(num_cmta = lengths(st_covers(Council2, CMTA2))) %>%
+  mutate(cmta_dens = as.numeric(num_cmta / area))
+
+ggplot(Council2) +
+  geom_sf(color = "gray95", 
+          aes(fill = cmta_dens)) +
+  scale_fill_viridis_c(name = "Austin council districts\nby transit stop density\n",
+                       breaks = breaks <- seq(0, 8, by = 2),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "stops per sq. km"),
+                       option = "inferno") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.75), 
+                                         color = "gray"),
+        panel.background = element_rect(fill = "gray95",
+                                        color = NA)) +
+  annotation_scale(location = "br",
+                   unit_category = "imperial")
+```
+
+Next I print a summary of the transit stop density statistics, showing an interquartile range from 0.80 to 4.07 stops per square km, with a maximum of 7.02 per sq. km again in the central council district. In this set, the densities appear to decrease most notably with distance from the city center, in addition to reflecting the East/West divide seen in affordable housing densities. 
+
+One could infer that the western portions of the city have overall lower densities, given that they see a reduced concentration of both transit service and affordable housing. 
+
+```{r summ council cmta dens, message=FALSE}
+summary(Council2$cmta_dens)
+```
+
+### 6. The number and proportion of PUDs containing affordable housing developments.
+
+Finally, I will calculate the number of PUD zoning districts in the City of Austin which contain affordable housing developments. First, a quick map illustrating where the PUDs are in the city, and the location of affordable developments located within PUDs. 
+
+```{r PUD afford subset, message=FALSE, fig.width=8, fig.height=8}
+afford_pud <- Afford2[PUDs2,]
+  
+ggplot(Council2) +
+  geom_sf(fill = "cornsilk", 
+          color = NA) +
+  geom_sf(data = PUDs2, 
+          color = NA,
+          fill = "darkslategray2") +
+  geom_sf(data = afford_pud, 
+          color = "magenta", 
+          size = 0.5) +
+  theme_map() +
+  theme(panel.background = element_rect(fill = "gray75",
+                                        color = NA)) 
+```
+
+Next, I attach a variable to my "PUDs2" data frame which includes the number of affordable housing developments located within each PUD. 
+
+```{r lengths afford puds, message=FALSE}
+PUDs2 <- PUDs2 %>%
+  mutate(num_pud_afford = lengths(st_covers(PUDs2, Afford2)))
+```
+
+```{r afford per pud summ, message=FALSE}
+summary(PUDs2$num_pud_afford)
+
+PUDs2_only_afford <- PUDs2 %>%
+  filter(num_pud_afford > 0)
+
+summary(PUDs2_only_afford$num_pud_afford)
+```
+
+While the median number of affordable housing developments located within PUDs is zero, the mean is 0.46, with a maximum of 14. Among those PUDs which do include affordable housing developments the median value is 3, and the mean is 3.65. 
+
+```{r percetn afford puds, message=FALSE}
+100 * (length(PUDs2_only_afford$num_pud_afford)/length(PUDs2$num_pud_afford))
+```
+
+Overall, approximately 9.7 percent of PUD zoning districts in Austin include affordable housing developments, or 89 out of 917 PUD zoning districts. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
