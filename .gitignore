@@ -40,3 +40,6 @@ vignettes/*.pdf
 
 # Data set folder
 DataLoads927/
+
+# OTP directory
+OTP/
