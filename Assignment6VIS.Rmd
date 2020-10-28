@@ -1,0 +1,64 @@
+---
+title: "VIS Assignment 6"
+author: "Ryan Johnson"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r library setup, include=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+```
+
+Create an interactive map of a neighborhood that shows the locations of particular amenity, where users
+can pan, zoom, and click on an amenity to display more information about it.
+
+
+```{r read data, message=FALSE}
+floodplain <- st_read("https://data.austintexas.gov/api/geospatial/2xn4-j3u2?method=export&format=GeoJSON") 
+```
+
+```{r data celaning, message=FALSE}
+floodplain1 <- floodplain %>%
+  filter(flood_zone == "City of Austin Fully Developed 100-Year Floodplain") %>%
+  mutate(acres = as.numeric(st_area(geometry))/4046.86) %>%
+  mutate(replace_floodway = ifelse(is.na(floodway), "No", "Yes")) %>%
+  select(flood_zone, replace_floodway, source_citation, modified_date, acres, objectid)
+```
+
+```{r leaflet map 1, message=FALSE}
+flood_map_1 <- leaflet(floodplain1) %>%
+  addProviderTiles(providers$CartoDB) %>%
+  addPolygons(fillColor = "blue", 
+              stroke = FALSE,
+              highlightOptions = highlightOptions(fillColor = "darkblue", 
+                                                  fillOpacity = .75)) %>%
+  addControl("100-Year Floodplains in Austin", position = "topright") %>%
+  addControl('<a href="https://data.austintexas.gov/Locations-and-Maps/Austin-Fully-Developed-Floodplain/2xn4-j3u2">Data source</a>',
+             position = "bottomleft")
+
+flood_map_1
+```
+
+```{r flood map 2, message=FALSE}
+floodplain1$description <- 
+  paste(floodplain1$modified_date, "<br>", prettyNum(floodplain1$acres, digits = 2), " acres") %>%
+  lapply(htmltools::HTML)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+st_crs(floodplain)
+```
+
